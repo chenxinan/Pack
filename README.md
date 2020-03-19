@@ -1,1 +1,3 @@
-# pack
+# Pack
+
+`npm run pack`
