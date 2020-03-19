@@ -1,16 +1,25 @@
 function genResult(entry, modules) {
     return `
     (function (modules) {
+        const cache = {};
+        const count = {};
         function require(moduleId) {
+            if (cache[moduleId]) return cache[moduleId];
+            count[moduleId] = (count[moduleId] || 0) + 1;
             const [modudeFn, mapping] = modules[moduleId];
-            function mapRequire(relativePath) {
-                return require(mapping[relativePath]);
+            function _require(relativePath) {
+                const moduleId = mapping[relativePath];
+                if (count[moduleId] >= 2) {
+                    console.error("循环引用: %s", moduleId)
+                    return;
+                }
+                return require(moduleId);
             }
             const module = {
                 exports: {}
             }
-            modudeFn(mapRequire, module, module.exports);
-            return module.exports;
+            modudeFn(_require, module, module.exports);
+            return cache[moduleId] = module.exports;
         }
         require('${entry}');
     })({${modules}})
